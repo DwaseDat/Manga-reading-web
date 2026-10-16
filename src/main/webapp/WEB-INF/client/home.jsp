@@ -67,7 +67,8 @@
         </div>
 
         <br/><hr/>
-        <p align="center" style="color: gray;">Footer</p>
-
+       
+<%@ include file="../include/footer.jsp" %>
     </body>
+    
 </html>
