@@ -6,13 +6,52 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Thêm Chapter Mới</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 0; background-color: #f9f9f9; }
-            .form-box { max-width: 550px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-            .form-group { margin-bottom: 15px; }
-            .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-            .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-            .btn-save { background: #007bff; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-            .btn-cancel { background: #6c757d; color: #fff; text-decoration: none; padding: 9px 18px; border-radius: 4px; font-size: 14px; margin-left: 10px; }
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                background-color: #f9f9f9;
+            }
+            .form-box {
+                max-width: 550px;
+                margin: 30px auto;
+                background: #fff;
+                padding: 25px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .form-group label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .form-group input {
+                width: 100%;
+                padding: 8px;
+                box-sizing: border-box;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            .btn-save {
+                background: #007bff;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-cancel {
+                background: #6c757d;
+                color: #fff;
+                text-decoration: none;
+                padding: 9px 18px;
+                border-radius: 4px;
+                font-size: 14px;
+                margin-left: 10px;
+            }
         </style>
     </head>
     <body>
@@ -40,10 +79,6 @@
                     <input type="text" name="folderPath" required placeholder="/comic_storage/chapters/ror/chap_2" />
                 </div>
 
-                <div class="form-group">
-                    <label>Tổng Số Trang Tranh (Ví dụ có file 1.jpg -> 6.jpg thì nhập 6) (*)</label>
-                    <input type="number" name="totalPages" required min="1" value="6" />
-                </div>
 
                 <button type="submit" class="btn-save">Thêm Chapter Mới</button>
                 <a href="${pageContext.request.contextPath}/admin/comics" class="btn-cancel">Hủy Bỏ</a>
