@@ -1,13 +1,40 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
-/**
- *
- * @author DAT
- */
 public class Favorite {
-    
+    private int favoriteId;
+    private int userId;
+    private int comicId;
+
+    public Favorite() {
+    }
+
+    public Favorite(int favoriteId, int userId, int comicId) {
+        this.favoriteId = favoriteId;
+        this.userId = userId;
+        this.comicId = comicId;
+    }
+
+    public int getFavoriteId() {
+        return favoriteId;
+    }
+
+    public void setFavoriteId(int favoriteId) {
+        this.favoriteId = favoriteId;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public int getComicId() {
+        return comicId;
+    }
+
+    public void setComicId(int comicId) {
+        this.comicId = comicId;
+    }
 }
