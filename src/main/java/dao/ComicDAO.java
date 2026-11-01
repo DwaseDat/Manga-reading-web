@@ -241,7 +241,7 @@ public class ComicDAO extends DBContext {
         }
         return list;
     }
-    
+
     // Lấy danh sách truyện xếp hạng theo các tiêu chí: views, status, favorites
     public List<Comic> getRankedComics(String filter) {
         List<Comic> list = new ArrayList<>();
@@ -250,10 +250,10 @@ public class ComicDAO extends DBContext {
         if ("favorites".equalsIgnoreCase(filter)) {
             // Lọc theo lượt thích (Favorite) giảm dần
             sql = "SELECT c.*, ISNULL(f.fav_count, 0) AS fav_count "
-                + "FROM Comics c "
-                + "LEFT JOIN (SELECT comic_id, COUNT(*) AS fav_count FROM Favorites GROUP BY comic_id) f "
-                + "ON c.comic_id = f.comic_id "
-                + "ORDER BY fav_count DESC, c.views DESC;";
+                    + "FROM Comics c "
+                    + "LEFT JOIN (SELECT comic_id, COUNT(*) AS fav_count FROM Favorites GROUP BY comic_id) f "
+                    + "ON c.comic_id = f.comic_id "
+                    + "ORDER BY fav_count DESC, c.views DESC;";
         } else if ("status".equalsIgnoreCase(filter)) {
             // Lọc theo tình trạng (Đã full trước, Đang tiến hành sau)
             sql = "SELECT * FROM Comics ORDER BY status ASC, views DESC;";
@@ -262,22 +262,44 @@ public class ComicDAO extends DBContext {
             sql = "SELECT * FROM Comics ORDER BY views DESC;";
         }
 
-        try (PreparedStatement ps = this.getConnection().prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (PreparedStatement ps = this.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(new Comic(
-                    rs.getInt("comic_id"),
-                    rs.getString("title"),
-                    rs.getString("author"),
-                    rs.getString("cover_image"),
-                    rs.getString("description"),
-                    rs.getString("status"),
-                    rs.getInt("views")
+                        rs.getInt("comic_id"),
+                        rs.getString("title"),
+                        rs.getString("author"),
+                        rs.getString("cover_image"),
+                        rs.getString("description"),
+                        rs.getString("status"),
+                        rs.getInt("views")
                 ));
             }
         } catch (SQLException ex) {
             Logger.getLogger(ComicDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return list;
+    }
+
+    // Lấy tên thư mục chuẩn hóa của truyện
+    public String getComicFolderById(int comicId) {
+        String sql = "SELECT title FROM Comics WHERE comic_id = ?;";
+        try (PreparedStatement ps = this.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, comicId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String title = rs.getString("title");
+                    // Chuyển tiếng Việt có dấu thành không dấu và thay khoảng trắng bằng gạch dưới
+                    String normalized = java.text.Normalizer.normalize(title, java.text.Normalizer.Form.NFD)
+                            .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                            .toLowerCase()
+                            .replaceAll("[^a-z0-9]", "_")
+                            .replaceAll("_+", "_");
+                    return normalized;
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return "comic_" + comicId; // Mặc định nếu không lấy được tên
     }
 }

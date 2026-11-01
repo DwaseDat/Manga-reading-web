@@ -5,6 +5,7 @@ public class Chapter {
     private int comicId;
     private int chapterNumber;
     private String title;
+    private boolean read;
 
     public Chapter() {}
 
@@ -26,4 +27,6 @@ public class Chapter {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public boolean isRead() { return read; }
+    public void setRead(boolean read) { this.read = read; }
 }

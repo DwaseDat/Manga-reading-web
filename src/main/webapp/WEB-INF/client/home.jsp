@@ -4,30 +4,20 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Trang Chủ - Web Đọc Truyện</title>
+        <title>${sectionTitle}</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 15px 30px; }
-            
-            /* Khung chứa các thẻ truyện xếp thành hàng ngang */
-            .comic-list { 
-                display: flex; 
-                flex-wrap: wrap; 
-                gap: 20px; 
-            }
-            
-            .comic-card { 
-                border: 1px solid #ccc; 
-                width: 220px; 
-                padding: 10px; 
-                border-radius: 6px; 
-                background-color: #fff;
-            }
-            .comic-card img { 
-                width: 100%; 
-                height: 280px; 
-                object-fit: cover; 
-                border-radius: 4px; 
-            }
+            body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; color: #333; }
+            .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+            .content-box { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
+            .content-title { font-size: 20px; font-weight: bold; margin: 0 0 15px; color: #333; border-bottom: 2px solid #CC7DFF; padding-bottom: 8px; }
+            .comic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+            .comic-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,.1); text-decoration: none; color: #333; display: flex; flex-direction: column; transition: transform .2s; }
+            .comic-card:hover { transform: translateY(-4px); box-shadow: 0 5px 12px rgba(80,45,120,.16); }
+            .comic-card img { width: 100%; height: 250px; object-fit: cover; }
+            .comic-info { padding: 12px; }
+            .comic-title { font-weight: bold; font-size: 15px; margin-bottom: 7px; min-height: 36px; }
+            .comic-meta { font-size: 13px; color: #666; margin-top: 4px; }
+            @media (max-width: 600px) { .container { margin: 12px auto; padding: 0 10px; } .content-box { padding: 14px; } .comic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .comic-card img { height: 220px; } }
         </style>
     </head>
     <body>
@@ -35,40 +25,33 @@
         <!-- 1. Nhúng Header chung của bạn -->
         <%@include file="../include/header.jsp" %>
 
-        <h3>Truyện Nổi Bật</h3>
-
-        <!-- 2. Hiển thị danh sách toàn bộ truyện -->
-        <div class="comic-list">
-            <c:choose>
-                <c:when test="${not empty comics}">
-                    <c:forEach var="comic" items="${comics}">
-                        <div class="comic-card">
-                            <!-- Ảnh lấy qua ImageServlet từ ổ D hoặc link online -->
-                            <a href="${pageContext.request.contextPath}/comic?id=${comic.comicId}">
-                                <img src="${pageContext.request.contextPath}${comic.coverImage}" alt="${comic.title}" 
-                                     onerror="this.src='https://placehold.co/200x280?text=No+Cover';" />
-                            </a>
-                            
-                            <h4 style="margin: 8px 0 4px 0;">
-                                <a href="${pageContext.request.contextPath}/comic?id=${comic.comicId}" style="text-decoration: none; color: #000;">
-                                    ${comic.title}
+        <main class="container">
+            <section class="content-box">
+                <h3 class="content-title">${empty sectionTitle ? '📚 Truyện Nổi Bật' : sectionTitle}</h3>
+                <c:choose>
+                    <c:when test="${not empty comics}">
+                        <div class="comic-grid">
+                            <c:forEach var="comic" items="${comics}">
+                                <a href="${pageContext.request.contextPath}/comic?id=${comic.comicId}" class="comic-card">
+                                    <img src="${pageContext.request.contextPath}${comic.coverImage}" alt="${comic.title}"
+                                         onerror="this.src='https://placehold.co/180x250?text=No+Cover';" />
+                                    <div class="comic-info">
+                                        <div class="comic-title">${comic.title}</div>
+                                        <div class="comic-meta">Tác giả: ${empty comic.author ? 'Chưa cập nhật' : comic.author}</div>
+                                        <div class="comic-meta">Tình trạng: ${comic.status}</div>
+                                        <div class="comic-meta">Lượt xem: ${comic.views}</div>
+                                    </div>
                                 </a>
-                            </h4>
-                            <p style="margin: 4px 0; font-size: 13px; color: gray;">Tác giả: ${comic.author}</p>
-                            <p style="margin: 4px 0; font-size: 13px;">Tình trạng: <b>${comic.status}</b></p>
-                            <p style="margin: 4px 0; font-size: 13px;">Lượt xem: ${comic.views}</p>
+                            </c:forEach>
                         </div>
-                    </c:forEach>
-                </c:when>
-                <c:otherwise>
-                    <p>Chưa có truyện nào trong cơ sở dữ liệu.</p>
-                </c:otherwise>
-            </c:choose>
-        </div>
-
-        <br/><hr/>
-       
-<%@ include file="../include/footer.jsp" %>
+                    </c:when>
+                    <c:otherwise>
+                        <p style="text-align:center;color:#888;padding:32px 0;">Không tìm thấy truyện phù hợp.</p>
+                    </c:otherwise>
+                </c:choose>
+            </section>
+        </main>
+        <%@ include file="../include/footer.jsp" %>
     </body>
     
 </html>

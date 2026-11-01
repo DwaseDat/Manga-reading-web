@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import model.Category;
 import model.Comic;
+import util.ComicStorage;
 
 @WebServlet(name = "AdminComicController", urlPatterns = {"/admin/comics"})
 @MultipartConfig(
@@ -23,8 +24,6 @@ import model.Comic;
     maxRequestSize = 1024 * 1024 * 50    // 50MB
 )
 public class AdminComicController extends HttpServlet {
-
-    private static final String UPLOAD_DIR = "D:/comic_storage/covers/";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -57,7 +56,6 @@ public class AdminComicController extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/admin/comic-form.jsp").forward(request, response);
                 break;
 
-            // BỔ SUNG: XỬ LÝ XÓA TRUYỆN
             case "delete":
                 try {
                     String idRaw = request.getParameter("id");
@@ -68,7 +66,6 @@ public class AdminComicController extends HttpServlet {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                // Sau khi xóa xong, redirect về trang danh sách
                 response.sendRedirect(request.getContextPath() + "/admin/comics");
                 return;
 
@@ -98,35 +95,28 @@ public class AdminComicController extends HttpServlet {
             // Nhận mảng các category_id được Admin tích chọn trên giao diện Checkbox
             String[] categoryIds = request.getParameterValues("categories");
             String coverImage = request.getParameter("coverImageOld"); // Mặc định giữ đường dẫn ảnh cũ
-
-            // XỬ LÝ UPLOAD FILE ẢNH MỚI (NẾU CÓ)
             Part filePart = request.getPart("coverImageFile");
-            if (filePart != null && filePart.getSize() > 0) {
-                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf(".")) : ".jpg";
-                String newFileName = "cover_" + System.currentTimeMillis() + ext;
-
-                File uploadDir = new File(UPLOAD_DIR);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
-                }
-
-                filePart.write(UPLOAD_DIR + newFileName);
-                coverImage = "/comic_storage/covers/" + newFileName;
-            }
 
             if (idRaw == null || idRaw.trim().isEmpty()) {
                 // Thêm mới truyện
                 Comic newComic = new Comic(0, title, author, coverImage, description, status, 0);
                 int generatedId = comicDAO.insertComic(newComic);
-                if (generatedId > 0 && categoryIds != null) {
-                    comicDAO.updateComicCategories(generatedId, categoryIds);
+                if (generatedId > 0) {
+                    if (hasUpload(filePart)) {
+                        coverImage = saveCover(filePart, generatedId);
+                        newComic.setComicId(generatedId);
+                        newComic.setCoverImage(coverImage);
+                        comicDAO.updateComic(newComic);
+                    }
+                    if (categoryIds != null) comicDAO.updateComicCategories(generatedId, categoryIds);
                 }
             } else {
                 // Cập nhật truyện
                 int id = Integer.parseInt(idRaw);
                 Comic existingComic = comicDAO.getComicById(id);
                 int views = (existingComic != null) ? existingComic.getViews() : 0;
+
+                if (hasUpload(filePart)) coverImage = saveCover(filePart, id);
 
                 Comic updateComic = new Comic(id, title, author, coverImage, description, status, views);
                 comicDAO.updateComic(updateComic);
@@ -137,5 +127,27 @@ public class AdminComicController extends HttpServlet {
         }
 
         response.sendRedirect(request.getContextPath() + "/admin/comics");
+    }
+
+    private boolean hasUpload(Part part) {
+        return part != null && part.getSize() > 0 && part.getSubmittedFileName() != null;
+    }
+
+    private String saveCover(Part part, int comicId) throws IOException, ServletException {
+        String submittedName = Paths.get(part.getSubmittedFileName().replace('\\', '/')).getFileName().toString();
+        int dot = submittedName.lastIndexOf('.');
+        if (dot < 0) throw new ServletException("File ảnh bìa không có phần mở rộng hợp lệ.");
+        String extension = submittedName.substring(dot).toLowerCase();
+        if (!extension.matches("\\.(jpg|jpeg|png|gif|webp|bmp)")) {
+            throw new ServletException("Chỉ chấp nhận file ảnh JPG, PNG, GIF, WEBP hoặc BMP.");
+        }
+
+        File coverDirectory = new File(ComicStorage.root(getServletContext()), "covers");
+        if (!coverDirectory.exists() && !coverDirectory.mkdirs()) {
+            throw new IOException("Không tạo được thư mục comic_storage/covers.");
+        }
+        String fileName = comicId + extension;
+        part.write(new File(coverDirectory, fileName).getAbsolutePath());
+        return "/images/covers/" + fileName;
     }
 }

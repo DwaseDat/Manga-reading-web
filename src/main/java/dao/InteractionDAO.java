@@ -5,12 +5,51 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Comic;
 
 public class InteractionDAO extends DBContext {
+
+    public int countFavoritesByComicId(int comicId) {
+        String sql = "SELECT COUNT(*) FROM Favorites WHERE comic_id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, comicId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getInt(1) : 0; }
+        } catch (SQLException ex) {
+            Logger.getLogger(InteractionDAO.class.getName()).log(Level.SEVERE, null, ex);
+            return 0;
+        }
+    }
+
+    public void markChapterRead(int userId, int comicId, int chapterId) {
+        String sql = "IF NOT EXISTS (SELECT 1 FROM User_Read_Chapters WHERE user_id = ? AND chapter_id = ?) "
+                + "INSERT INTO User_Read_Chapters (user_id, comic_id, chapter_id) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId); ps.setInt(2, chapterId);
+            ps.setInt(3, userId); ps.setInt(4, comicId); ps.setInt(5, chapterId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(InteractionDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public Set<Integer> getReadChapterIds(int userId, int comicId) {
+        Set<Integer> chapterIds = new HashSet<>();
+        String sql = "SELECT chapter_id FROM User_Read_Chapters WHERE user_id = ? AND comic_id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId); ps.setInt(2, comicId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) chapterIds.add(rs.getInt("chapter_id"));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(InteractionDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return chapterIds;
+    }
 
     // 1. Kiểm tra người dùng đã thêm bộ truyện này vào yêu thích chưa
     public boolean isFavorite(int userId, int comicId) {

@@ -4,7 +4,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Thêm Chapter Mới</title>
+        <title>${not empty chapter ? 'Sửa Chapter' : 'Thêm Chapter Mới'}</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -59,29 +59,40 @@
         <%@include file="../include/header.jsp" %>
 
         <div class="form-box">
-            <h2>Thêm Chapter Mới (Comic ID: ${comicId})</h2>
+            <h2>${not empty chapter ? 'Sửa Thông Tin Chapter' : 'Thêm Chapter Mới'} (Comic ID: ${comicId})</h2>
 
-            <form action="${pageContext.request.contextPath}/admin/chapters" method="POST">
+            <c:if test="${not empty error}"><p style="color:red;">${error}</p></c:if>
+
+            <!-- BỔ SUNG enctype="multipart/form-data" ĐỂ GỬI CÁC FILE ẢNH -->
+            <form action="${pageContext.request.contextPath}/admin/chapters" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="${not empty chapter ? 'update' : 'create'}" />
                 <input type="hidden" name="comicId" value="${comicId}" />
+                
+                <c:if test="${not empty chapter}">
+                    <input type="hidden" name="chapterId" value="${chapter.chapterId}" />
+                </c:if>
 
                 <div class="form-group">
                     <label>Tập Số (Chapter Number) (*)</label>
-                    <input type="number" name="chapterNumber" required placeholder="Ví dụ: 2" />
+                    <input type="number" name="chapterNumber" value="${not empty chapter ? chapter.chapterNumber : ''}" required placeholder="Ví dụ: 2" />
                 </div>
 
                 <div class="form-group">
                     <label>Tiêu Đề Chapter (*)</label>
-                    <input type="text" name="title" required placeholder="Ví dụ: Trận chiến Ragnarok thứ nhất" />
+                    <input type="text" name="title" value="${not empty chapter ? chapter.title : ''}" required placeholder="Ví dụ: Trận chiến Ragnarok thứ nhất" />
                 </div>
 
-                <div class="form-group">
-                    <label>Đường Dẫn Thư Mục Chứa Tranh (Relative Path) (*)</label>
-                    <input type="text" name="folderPath" required placeholder="/comic_storage/chapters/ror/chap_2" />
-                </div>
+                <!-- BỔ SUNG: CHỌN BỘ ẢNH TỪ MÁY (DOWNLOADS...) KHI THÊM MỚI -->
+                <c:if test="${empty chapter}">
+                    <div class="form-group">
+                        <label>Chọn các ảnh trong thư mục Chapter (*)</label>
+                        <input type="file" name="chapterImages" accept="image/*" multiple required style="border: none; padding: 0;" />
+                        <small style="color: #666; display: block; margin-top: 4px;">Mở thư mục ảnh đã tải về, nhấn Ctrl+A để chọn các ảnh. Ảnh sẽ được sắp theo tên và lưu thành 1.jpg, 2.png... trong comic_storage/chapters/${comicId}/chap_${not empty chapter ? chapter.chapterNumber : 'N'}.</small>
+                    </div>
+                </c:if>
 
-
-                <button type="submit" class="btn-save">Thêm Chapter Mới</button>
-                <a href="${pageContext.request.contextPath}/admin/comics" class="btn-cancel">Hủy Bỏ</a>
+                <button type="submit" class="btn-save">${not empty chapter ? 'Lưu Thay Đổi' : 'Thêm Chapter & Lưu Ảnh'}</button>
+                <a href="${pageContext.request.contextPath}/admin/chapters?comicId=${comicId}" class="btn-cancel">Hủy Bỏ</a>
             </form>
         </div>
 

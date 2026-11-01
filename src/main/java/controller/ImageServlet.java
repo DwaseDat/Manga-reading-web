@@ -9,11 +9,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import util.ComicStorage;
 
 @WebServlet(name = "ImageServlet", urlPatterns = {"/images/*"})
 public class ImageServlet extends HttpServlet {
-
-    private static final String BASE_PATH = "D:/comic_storage";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -25,8 +24,16 @@ public class ImageServlet extends HttpServlet {
             return;
         }
 
-        File file = new File(BASE_PATH, pathInfo);
-        if (!file.exists() || file.isDirectory()) {
+        String relativePath = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
+        File storageRoot;
+        try {
+            storageRoot = ComicStorage.root(getServletContext());
+        } catch (IOException ex) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        File file = new File(storageRoot, relativePath).getCanonicalFile();
+        if (!file.toPath().startsWith(storageRoot.getCanonicalFile().toPath()) || !file.exists() || file.isDirectory()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }

@@ -24,6 +24,26 @@
         padding: 6px 14px;
         border-radius: 20px;
     }
+    .admin-home-link {
+        color: #5638a8;
+        background: rgba(255,255,255,.72);
+        border: 1px solid rgba(86,56,168,.2);
+        text-decoration: none;
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        white-space: nowrap;
+        transition: background .2s, box-shadow .2s;
+    }
+    .admin-home-link:hover { background: #fff; color: #452b91; box-shadow: 0 2px 8px rgba(60,35,110,.12); }
+    .main-nav { display: flex; justify-content: center; gap: 30px; font-weight: bold; }
+    .menu-inner { position: relative; min-height: 34px; display: flex; align-items: center; justify-content: center; }
+    .admin-shortcut { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+    @media (max-width: 760px) {
+        .menu-inner { flex-direction: column; gap: 12px; }
+        .main-nav { flex-wrap: wrap; gap: 16px; }
+        .admin-shortcut { position: static; transform: none; }
+    }
 </style>
 
 <!-- PHẦN 1: Thanh trên (Logo, Tìm kiếm, Đăng nhập / Đăng xuất) -->
@@ -69,16 +89,21 @@
 
 <!-- PHẦN 2: Thanh menu dưới -->
 <div style="background-color: #EACAFF; color: #ffffff; padding: 10px 30px; width: 100%; box-sizing: border-box;">
-    <div style="display: flex; justify-content: center; gap: 30px; font-weight: bold;">
-        <a href="${pageContext.request.contextPath}/home" class="nav-menu-link">Home</a>
-        <a href="${pageContext.request.contextPath}/hot" class="nav-menu-link">Hot</a>
-        <a href="${pageContext.request.contextPath}/category" class="nav-menu-link">Category</a>
-        <a href="${pageContext.request.contextPath}/rank" class="nav-menu-link">Rank</a>
+    <div class="menu-inner">
+        <nav class="main-nav">
+            <a href="${pageContext.request.contextPath}/home" class="nav-menu-link">Home</a>
+            <a href="${pageContext.request.contextPath}/hot" class="nav-menu-link">Hot</a>
+            <a href="${pageContext.request.contextPath}/category" class="nav-menu-link">Category</a>
+            <a href="${pageContext.request.contextPath}/rank" class="nav-menu-link">Rank</a>
 
-        <!-- Chỉ hiển thị History và Favorite khi người dùng ĐÃ ĐĂNG NHẬP -->
-        <c:if test="${not empty sessionScope.loggedInUser}">
-            <a href="${pageContext.request.contextPath}/favorite" class="nav-menu-link">Follow</a>
-            <a href="${pageContext.request.contextPath}/history" class="nav-menu-link">History</a>
+            <!-- Chỉ hiển thị History và Favorite khi người dùng ĐÃ ĐĂNG NHẬP -->
+            <c:if test="${not empty sessionScope.loggedInUser}">
+                <a href="${pageContext.request.contextPath}/favorite" class="nav-menu-link">Follow</a>
+                <a href="${pageContext.request.contextPath}/history" class="nav-menu-link">History</a>
+            </c:if>
+        </nav>
+        <c:if test="${sessionScope.loggedInUser.role eq 'ADMIN'}">
+            <a href="${pageContext.request.contextPath}/admin/comics" class="admin-home-link admin-shortcut">⚙ Quản lý truyện</a>
         </c:if>
     </div>
 </div>

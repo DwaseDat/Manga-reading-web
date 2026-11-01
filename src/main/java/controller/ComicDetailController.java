@@ -2,6 +2,7 @@ package controller;
 
 import dao.CategoryDAO;
 import dao.ChapterDAO;
+import dao.CommentDAO;
 import dao.ComicDAO;
 import dao.InteractionDAO;
 import jakarta.servlet.ServletException;
@@ -12,9 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import model.Category;
 import model.Chapter;
 import model.Comic;
+import model.Comment;
 import model.User;
 
 @WebServlet(name = "ComicDetailController", urlPatterns = {"/comic"})
@@ -62,16 +65,25 @@ public class ComicDetailController extends HttpServlet {
         User user = (User) session.getAttribute("loggedInUser");
 
         boolean isFavorite = false;
+        InteractionDAO interactDao = new InteractionDAO();
         if (user != null) {
-            InteractionDAO interactDao = new InteractionDAO();
             isFavorite = interactDao.isFavorite(user.getUserId(), id);
+            Set<Integer> readChapterIds = interactDao.getReadChapterIds(user.getUserId(), id);
+            for (Chapter chapter : chapters) chapter.setRead(readChapterIds.contains(chapter.getChapterId()));
         }
+
+        int favoriteCount = interactDao.countFavoritesByComicId(id);
+        CommentDAO commentDao = new CommentDAO();
+        List<Comment> comments = commentDao.getCommentsByComicId(id);
 
         // 4. Đẩy tất cả dữ liệu sang View
         request.setAttribute("comic", comic);
         request.setAttribute("chapters", chapters);
         request.setAttribute("categories", categories);
         request.setAttribute("isFavorite", isFavorite);
+        request.setAttribute("favoriteCount", favoriteCount);
+        request.setAttribute("comments", comments);
+        request.setAttribute("commentCount", comments.size());
 
         // 5. Chuyển hướng duy nhất ở CUỐI HÀM
         request.getRequestDispatcher("/WEB-INF/client/comic-detail.jsp").forward(request, response);

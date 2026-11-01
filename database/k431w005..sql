@@ -129,6 +129,19 @@ BEGIN
 END
 GO
 
+-- Bảng ghi nhận từng chapter người dùng đã mở để tô đậm ở trang chi tiết
+IF OBJECT_ID(N'[dbo].[User_Read_Chapters]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[User_Read_Chapters] (
+        [user_id] INT NOT NULL,
+        [comic_id] INT NOT NULL,
+        [chapter_id] INT NOT NULL,
+        [read_at] DATETIME NOT NULL DEFAULT (GETDATE()),
+        PRIMARY KEY CLUSTERED ([user_id], [chapter_id])
+    );
+END
+GO
+
 -- Bảng 9: Ratings (Đánh giá từ 1 đến 5 sao)
 IF OBJECT_ID(N'[dbo].[Ratings]', N'U') IS NULL
 BEGIN

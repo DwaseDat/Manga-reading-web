@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 import model.Comic;
 
-@WebServlet(name = "HomeController", urlPatterns = {"/home"})
+@WebServlet(name = "HomeController", urlPatterns = {"/home", ""})
 public class HomeController extends HttpServlet {
 
     @Override
@@ -32,6 +32,9 @@ public class HomeController extends HttpServlet {
         // Gửi danh sách qua JSP
         request.setAttribute("comics", comicList);
         request.setAttribute("keyword", keyword);
+        request.setAttribute("sectionTitle", keyword != null && !keyword.trim().isEmpty()
+                ? "🔎 Kết quả tìm kiếm: " + keyword.trim()
+                : "📚 Danh Sách Truyện Mới Cập Nhật");
 
         request.getRequestDispatcher("/WEB-INF/client/home.jsp").forward(request, response);
     }

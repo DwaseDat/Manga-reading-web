@@ -2,6 +2,7 @@ package dao;
 
 import db.DBContext;
 import java.sql.PreparedStatement;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -13,21 +14,21 @@ import model.Chapter;
 
 public class ChapterDAO extends DBContext {
 
-    // Lấy danh sách Chapter của 1 bộ truyện theo comicId
+// Lấy danh sách Chapter theo comic_id
     public List<Chapter> getChaptersByComicId(int comicId) {
         List<Chapter> list = new ArrayList<>();
-        String sql = "SELECT * FROM Chapters WHERE comic_id = ? ORDER BY chapter_number ASC;";
-        try {
-            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+        String sql = "SELECT chapter_id, comic_id, chapter_number, title FROM Chapters WHERE comic_id = ? ORDER BY chapter_number ASC;";
+        try (PreparedStatement ps = this.getConnection().prepareStatement(sql)) {
             ps.setInt(1, comicId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                list.add(new Chapter(
-                        rs.getInt("chapter_id"),
-                        rs.getInt("comic_id"),
-                        rs.getInt("chapter_number"),
-                        rs.getString("title")
-                ));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Chapter(
+                            rs.getInt("chapter_id"),
+                            rs.getInt("comic_id"),
+                            rs.getInt("chapter_number"),
+                            rs.getString("title")
+                    ));
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(ChapterDAO.class.getName()).log(Level.SEVERE, null, ex);
@@ -109,6 +110,12 @@ public class ChapterDAO extends DBContext {
 
     // Thêm Chapter mới và danh sách các trang ảnh tự động
     public boolean insertChapterWithPages(int comicId, int chapterNumber, String title, String folderPath, int totalPages) {
+        List<String> urls = new ArrayList<>();
+        for (int i = 1; i <= totalPages; i++) urls.add(folderPath + "/" + i + ".jpg");
+        return insertChapterWithPages(comicId, chapterNumber, title, urls);
+    }
+
+    public boolean insertChapterWithPages(int comicId, int chapterNumber, String title, List<String> imageUrls) {
         String sqlChapter = "INSERT INTO Chapters (comic_id, chapter_number, title) VALUES (?, ?, ?);";
         String sqlPage = "INSERT INTO Chapter_Pages (chapter_id, page_number, image_url) VALUES (?, ?, ?);";
 
@@ -129,11 +136,10 @@ public class ChapterDAO extends DBContext {
             // 2. Chèn tự động danh sách các trang ảnh tương ứng vào Chapter_Pages
             if (newChapterId > 0) {
                 PreparedStatement ps2 = this.getConnection().prepareStatement(sqlPage);
-                for (int i = 1; i <= totalPages; i++) {
+                for (int i = 0; i < imageUrls.size(); i++) {
                     ps2.setInt(1, newChapterId);
-                    ps2.setInt(2, i);
-                    // Ghép đường dẫn dạng: /comic_storage/chapters/ror/chap_2/1.jpg
-                    ps2.setString(3, folderPath + "/" + i + ".jpg");
+                    ps2.setInt(2, i + 1);
+                    ps2.setString(3, imageUrls.get(i));
                     ps2.addBatch();
                 }
                 ps2.executeBatch(); // Thực thi chèn hàng loạt
@@ -143,5 +149,47 @@ public class ChapterDAO extends DBContext {
             Logger.getLogger(ChapterDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
+    }
+
+// Xóa Chapter theo ID
+    public boolean deleteChapter(int chapterId) {
+        Connection connection = getConnection();
+        if (connection == null) return false;
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement clearReadingHistory = connection.prepareStatement("UPDATE Reading_History SET last_chapter_id = NULL WHERE last_chapter_id = ?");
+                 PreparedStatement deletePages = connection.prepareStatement("DELETE FROM Chapter_Pages WHERE chapter_id = ?");
+                 PreparedStatement deleteChapter = connection.prepareStatement("DELETE FROM Chapters WHERE chapter_id = ?")) {
+                clearReadingHistory.setInt(1, chapterId);
+                clearReadingHistory.executeUpdate();
+                deletePages.setInt(1, chapterId);
+                deletePages.executeUpdate();
+                deleteChapter.setInt(1, chapterId);
+                boolean deleted = deleteChapter.executeUpdate() > 0;
+                connection.commit();
+                return deleted;
+            } catch (SQLException ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(ChapterDAO.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+
+    // Cập nhật Tập số và Tiêu đề Chapter
+    public void updateChapter(int chapterId, int chapterNumber, String title) {
+        String sql = "UPDATE Chapters SET chapter_number = ?, title = ? WHERE chapter_id = ?;";
+        try (PreparedStatement ps = this.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, chapterNumber);
+            ps.setString(2, title);
+            ps.setInt(3, chapterId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ChapterDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

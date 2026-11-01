@@ -42,6 +42,7 @@ public class ReadChapterController extends HttpServlet {
             if (user != null) {
                 InteractionDAO interactDao = new InteractionDAO();
                 interactDao.saveOrUpdateHistory(user.getUserId(), currentChapter.getComicId(), chapterId);
+                interactDao.markChapterRead(user.getUserId(), currentChapter.getComicId(), chapterId);
             }
             // =========================================================================
 

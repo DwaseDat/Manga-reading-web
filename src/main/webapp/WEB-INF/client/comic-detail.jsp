@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -8,7 +9,18 @@
         <style>
             body {
                 font-family: Arial, sans-serif;
-                margin: 15px 30px;
+                margin: 0;
+                background: #f3f3f3;
+            }
+            .page-container {
+                width: calc(100% - 48px);
+                max-width: 1500px;
+                box-sizing: border-box;
+                margin: 24px auto;
+                padding: 24px 28px;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 12px rgba(0,0,0,.06);
             }
             .detail-container {
                 display: flex;
@@ -48,10 +60,22 @@
             .chapter-item a {
                 text-decoration: none;
                 color: #007bff;
-                font-weight: bold;
+                font-weight: 400;
             }
+            .chapter-item a.read-chapter { color: #6841a5; font-weight: 700; }
             .chapter-item a:hover {
                 color: #0056b3;
+            }
+            .comments { margin: 30px 0; padding: 20px; background: #fff; border: 1px solid #eadcf5; border-radius: 8px; }
+            .comments h3 { color: #8050ad; margin-top: 0; }
+            .comment-form textarea { width: 100%; min-height: 90px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font: inherit; resize: vertical; }
+            .comment-submit { margin-top: 8px; border: 0; border-radius: 5px; padding: 9px 16px; background: #9b59b6; color: #fff; font-weight: bold; cursor: pointer; }
+            .comment-card { padding: 12px 0; border-bottom: 1px solid #eee; }
+            .comment-meta { color: #777; font-size: 13px; margin-bottom: 5px; }
+            .comment-content { white-space: pre-wrap; overflow-wrap: anywhere; }
+            @media (max-width: 640px) {
+                .page-container { width: 100%; margin: 0; padding: 18px 14px; border-radius: 0; }
+                .detail-container { flex-direction: column; }
             }
         </style>
     </head>
@@ -59,6 +83,7 @@
 
         <%@include file="../include/header.jsp" %>
 
+        <main class="page-container">
         <div class="detail-container">
             <img src="${pageContext.request.contextPath}${comic.coverImage}" alt="${comic.title}" 
                  onerror="this.src='https://placehold.co/220x300?text=No+Cover';" />
@@ -68,6 +93,7 @@
                 <p><b>Tác giả:</b> ${comic.author}</p>
                 <p><b>Tình trạng:</b> ${comic.status}</p>
                 <p><b>Lượt xem:</b> ${comic.views}</p>
+                <p><b>💜 Lượt yêu thích:</b> ${favoriteCount}</p>
 
                 <!-- HIỂN THỊ CÁC THỂ LOẠI -->
                 <p>
@@ -113,7 +139,7 @@
                 <c:when test="${not empty chapters}">
                     <c:forEach var="chap" items="${chapters}">
                         <div class="chapter-item">
-                            <a href="${pageContext.request.contextPath}/read?chapterId=${chap.chapterId}">
+                            <a class="${chap.read ? 'read-chapter' : ''}" href="${pageContext.request.contextPath}/read?chapterId=${chap.chapterId}">
                                 Chương ${chap.chapterNumber}: ${chap.title}
                             </a>
                         </div>
@@ -124,6 +150,42 @@
                 </c:otherwise>
             </c:choose>
         </div>
+
+        <section class="comments" id="comments">
+            <h3>💬 Bình luận (${commentCount})</h3>
+            <c:if test="${param.commented eq '1'}"><p style="color:green;">Bình luận đã được đăng.</p></c:if>
+            <c:if test="${param.commentError eq '1'}"><p style="color:#d63031;">Bình luận không được để trống và tối đa 2.000 ký tự.</p></c:if>
+
+            <c:choose>
+                <c:when test="${not empty sessionScope.loggedInUser}">
+                    <form class="comment-form" action="${pageContext.request.contextPath}/comment" method="POST">
+                        <input type="hidden" name="comicId" value="${comic.comicId}" />
+                        <textarea name="content" maxlength="2000" required placeholder="Viết bình luận của bạn..."></textarea>
+                        <button class="comment-submit" type="submit">Gửi bình luận</button>
+                    </form>
+                </c:when>
+                <c:otherwise>
+                    <p><a href="${pageContext.request.contextPath}/login">Đăng nhập</a> để viết bình luận.</p>
+                </c:otherwise>
+            </c:choose>
+
+            <div class="comment-list">
+                <c:choose>
+                    <c:when test="${not empty comments}">
+                        <c:forEach var="comment" items="${comments}">
+                            <article class="comment-card">
+                                <div class="comment-meta"><b><c:out value="${comment.username}" default="Người dùng" /></b>
+                                    <c:if test="${not empty comment.createdAt}"> · <fmt:formatDate value="${comment.createdAt}" pattern="dd/MM/yyyy HH:mm" /></c:if>
+                                </div>
+                                <div class="comment-content"><c:out value="${comment.content}" /></div>
+                            </article>
+                        </c:forEach>
+                    </c:when>
+                    <c:otherwise><p>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p></c:otherwise>
+                </c:choose>
+            </div>
+        </section>
+        </main>
 
     </body>
 </html>
